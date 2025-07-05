@@ -9,78 +9,74 @@ from dotenv import load_dotenv
 # 加载环境变量
 load_dotenv()
 
-def main():
-    """主函数"""
-    excel_file = os.getenv('EXCEL_FILE', 'yxc.xlsx')
+def test_reset_logic():
+    """测试重置逻辑"""
+    print("=== 测试重置逻辑 ===")
     
-    print(f"🧪 测试重置逻辑: {excel_file}")
-    
-    try:
         # 读取Excel文件
-        df = pd.read_excel(excel_file)
-        print(f"✅ 成功读取Excel文件，共 {len(df)} 行数据")
+    df = pd.read_excel(os.getenv('EXCEL_FILE', 'yxc.xlsx'))
+    print(f"原始数据:")
+    print(df)
+    print()
         
-        # 查找关键列
-        columns = {}
-        for col in df.columns:
-            if '剩余' in str(col):
-                columns['remaining'] = col
-            elif '总天' in str(col):
-                columns['total'] = col
-            elif '开始时间' in str(col):
-                columns['start_date'] = col
-        
-        print(f"🎯 找到的列: {columns}")
-        
-        # 显示当前状态
-        print(f"\n📊 当前状态:")
+    # 模拟列名查找
+    columns = {
+        'remaining': '剩余',
+        'total': '总天', 
+        'start_date': '开始时间'
+    }
+    print(f"使用的列名: {columns}")
+    print()
+    
+    # 模拟update_expired_items函数
+    updated_items = []
+    current_date = datetime.now()
+    
+    print("检查每个项目:")
         for idx, row in df.iterrows():
-            print(f"行 {idx + 1}: {row.get(' 店铺名称', 'N/A')}")
-            print(f"  总天数: {row[columns['total']]}")
-            print(f"  剩余天数: {row[columns['remaining']]}")
-            print(f"  开始时间: {row[columns['start_date']]}")
+        remaining = row[columns['remaining']]
+        total = row[columns['total']]
+        start_date = row[columns['start_date']]
         
-        # 模拟将第一行的剩余天数设为0
-        print(f"\n🔄 模拟将第一行剩余天数设为0...")
-        df.at[0, columns['remaining']] = 0
+        print(f"行{idx+1}: 剩余={remaining}, 总天={total}, 开始时间={start_date}")
         
-        print(f"行 1 剩余天数已设为: {df.at[0, columns['remaining']]}")
-        
-        # 模拟重置逻辑
-        print(f"\n🔄 执行重置逻辑...")
-        current_date = datetime.now()
+        # 如果剩余天数为0，需要重置
+        if pd.notna(remaining) and int(remaining) == 0:
+            print(f"  🔄 发现剩余天数为0，准备重置")
+            
+            # 更新开始时间为今天
         new_start_date = current_date.strftime('%Y%m%d')
-        
-        # 先更新开始时间为今天
-        old_start_date = df.at[0, columns['start_date']]
-        df.at[0, columns['start_date']] = int(new_start_date)
-        
-        # 然后重置剩余天数为总天数
-        total_days = df.at[0, columns['total']]
-        df.at[0, columns['remaining']] = total_days
-        
-        print(f"✅ 重置完成:")
-        print(f"  开始时间: {old_start_date} → {new_start_date}")
-        print(f"  剩余天数: 0 → {total_days}")
-        
-        # 保存测试文件
+            print(f"    新开始时间: {new_start_date}")
+            
+            # 重置剩余天数为总天数
+            print(f"    重置剩余天数: {total}")
+            
+            # 实际更新数据
+            df.at[idx, columns['start_date']] = str(new_start_date)
+            df.at[idx, columns['remaining']] = total
+            
+            updated_items.append({
+                'row': idx + 1,
+                'name': row.get(' 店铺名称', f'行{idx+1}'),
+                'total_days': total,
+                'old_start': start_date,
+                'new_start': new_start_date
+            })
+        else:
+            print(f"  ✅ 剩余天数不为0，跳过")
+        print()
+    
+    print(f"重置了 {len(updated_items)} 个项目")
+    print()
+    
+    print("更新后的数据:")
+    print(df)
+    print()
+    
+    # 保存更新后的文件
         test_file = "test_reset_result.xlsx"
         df.to_excel(test_file, index=False)
-        print(f"\n💾 测试结果已保存到: {test_file}")
-        
-        # 验证重置后的状态
-        print(f"\n📊 重置后状态:")
-        for idx, row in df.iterrows():
-            print(f"行 {idx + 1}: {row.get(' 店铺名称', 'N/A')}")
-            print(f"  总天数: {row[columns['total']]}")
-            print(f"  剩余天数: {row[columns['remaining']]}")
-            print(f"  开始时间: {row[columns['start_date']]}")
-        
-        print(f"\n🎯 测试完成！重置逻辑工作正常。")
-        print(f"💡 现在第一行的剩余天数已经从0重置为总天数，开始时间也更新为今天。")
-        
-    except Exception as e:
-        print(f"❌ 测试重置逻辑时出错: {e}")
+    print(f"已保存到 {test_file}")
 
 if __name__ == "__main__":
-    main() 
+    test_reset_logic() 

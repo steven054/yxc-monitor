@@ -191,7 +191,10 @@ class SmartExpiryChecker:
                 
                 # 更新开始时间为今天
                 new_start_date = self.format_date(current_date)
-                # 确保日期格式正确
+                # 确保日期格式正确，保持与原始数据类型一致
+                if pd.api.types.is_integer_dtype(df[columns['start_date']]):
+                    df.at[idx, columns['start_date']] = int(new_start_date)
+                else:
                 df.at[idx, columns['start_date']] = str(new_start_date)
                 
                 # 重置剩余天数为总天数

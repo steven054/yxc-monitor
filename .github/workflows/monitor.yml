@@ -24,7 +24,7 @@ jobs:
     - name: 安装依赖
       run: |
         python -m pip install --upgrade pip
-        pip install pandas openpyxl requests python-dotenv
+        pip install pandas openpyxl requests python-dotenv schedule
         
     - name: 上传Excel文件
       uses: actions/upload-artifact@v4
@@ -34,7 +34,6 @@ jobs:
         
     - name: 运行监控脚本
       env:
-        EXCEL_FILE: yxc.xlsx
         EMAIL_ENABLED: ${{ secrets.EMAIL_ENABLED }}
         SMTP_SERVER: ${{ secrets.SMTP_SERVER }}
         SMTP_PORT: ${{ secrets.SMTP_PORT }}
@@ -48,7 +47,7 @@ jobs:
         SMS_API_KEY: ${{ secrets.SMS_API_KEY }}
         SMS_PHONE_NUMBER: ${{ secrets.SMS_PHONE_NUMBER }}
       run: |
-        python cloud_monitor.py
+        python github_monitor.py
         
     - name: 下载更新后的Excel文件
       uses: actions/download-artifact@v4
@@ -60,6 +59,6 @@ jobs:
       run: |
         git config --local user.email "action@github.com"
         git config --local user.name "GitHub Action"
-        git add yxc.xlsx
+        git add yxc.xlsx yxc_backup.xlsx
         git diff --quiet && git diff --staged --quiet || git commit -m "自动更新Excel文件 - $(date)"
         git push 
