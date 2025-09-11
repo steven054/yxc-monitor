@@ -341,7 +341,10 @@ class GitHubExpiryChecker:
             # 创建邮件对象
             msg = MIMEMultipart('related')
             msg['From'] = config['username']
-            msg['To'] = config['to_email']
+            
+            # 处理多个接收者
+            to_emails = [email.strip() for email in config['to_email'].split(',')]
+            msg['To'] = ', '.join(to_emails)
             msg['Subject'] = subject
             
             # 添加HTML内容
@@ -366,11 +369,11 @@ class GitHubExpiryChecker:
                 server.starttls()
             
             server.login(config['username'], config['password'])
-            server.send_message(msg)
+            server.send_message(msg, to_addrs=to_emails)
             server.quit()
             
             print("✅ 增强版邮件通知发送成功")
-            print(f"📧 邮件已发送到: {config['to_email']}")
+            print(f"📧 邮件已发送到: {', '.join(to_emails)}")
             print("📊 邮件包含表格图片和详细状态信息")
             return True
             

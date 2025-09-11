@@ -21,7 +21,7 @@ def test_email():
         'smtp_port': int(os.getenv('SMTP_PORT', '465')),
         'username': os.getenv('EMAIL_USERNAME', 'shidewei054@163.com'),
         'password': os.getenv('EMAIL_PASSWORD', 'CEpJp32m4rX6weNH'),
-        'to_email': os.getenv('TO_EMAIL', 'yangxingchao87@163.com')
+        'to_email': os.getenv('TO_EMAIL', 'yangxingchao87@163.com,408838485@qq.com')
     }
     
     print(f"SMTP服务器: {config['smtp_server']}:{config['smtp_port']}")
@@ -53,7 +53,10 @@ def test_email():
         # 创建邮件对象
         msg = MIMEMultipart()
         msg['From'] = config['username']
-        msg['To'] = config['to_email']
+        
+        # 处理多个接收者
+        to_emails = [email.strip() for email in config['to_email'].split(',')]
+        msg['To'] = ', '.join(to_emails)
         msg['Subject'] = subject
         
         msg.attach(MIMEText(body, 'plain', 'utf-8'))
@@ -73,11 +76,11 @@ def test_email():
         server.login(config['username'], config['password'])
         
         print("正在发送邮件...")
-        server.send_message(msg)
+        server.send_message(msg, to_addrs=to_emails)
         server.quit()
         
         print("✅ 测试邮件发送成功！")
-        print(f"📧 邮件已发送到: {config['to_email']}")
+        print(f"📧 邮件已发送到: {', '.join(to_emails)}")
         print("请检查您的邮箱（包括垃圾邮件文件夹）")
         
     except Exception as e:
