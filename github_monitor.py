@@ -439,14 +439,16 @@ GitHub监控报告 - 项目到期提醒
         # 第二步：检查到期项目（减1后可能变成0的项目）
         expired_items = self.check_expiry_items(df, columns)
         
-        # 第三步：更新到期项目（重置开始时间和剩余天数）
+        # 第三步：发送通知（在重置之前，这样图片中还能看到过期项目）
+        if expired_items:
+            print(f"📧 发送通知")
+            # 创建一个空的updated_items列表，因为还没有重置
+            empty_updated_items = []
+            self.send_email_notification(expired_items, empty_updated_items, df)
+        
+        # 第四步：更新到期项目（重置开始时间和剩余天数）
         updated_items = self.update_expired_items(df, columns)
         print(f"🔄 重置了 {len(updated_items)} 个到期项目")
-        
-        # 第四步：发送通知
-        if expired_items or updated_items:
-            print(f"📧 发送通知")
-            self.send_email_notification(expired_items, updated_items, df)
         
         # 保存更新后的Excel文件
         if self.save_excel_file(df):
