@@ -249,6 +249,7 @@ class GitHubExpiryChecker:
                 if remaining_days == '0':
                     for j in range(5):
                         table[(i, j)].set_facecolor('#ffcccc')  # 红色背景
+                        table[(i, j)].set_text_props(weight='bold', color='red')  # 红色粗体字体
             
             # 保存图片到内存
             img_buffer = io.BytesIO()
