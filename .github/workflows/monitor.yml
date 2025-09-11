@@ -2,8 +2,8 @@ name: 智能监控任务
 
 on:
   schedule:
-    # 每天6:30执行（UTC时间，北京时间是UTC+8，所以UTC 22:30 = 北京时间 6:30）
-    - cron: '30 22 * * *'
+    # 每天7:00执行（UTC时间，北京时间是UTC+8，所以UTC 23:00 = 北京时间 7:00）
+    - cron: '0 23 * * *'
   workflow_dispatch:  # 允许手动触发
 
 jobs:
