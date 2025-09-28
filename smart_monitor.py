@@ -187,7 +187,8 @@ class SmartExpiryChecker:
             
             # 如果剩余天数为0，需要重置
             if pd.notna(remaining) and int(remaining) == 0:
-                print(f"🔄 重置项目: {row.get(' 店铺名称', f'行{idx+1}')}")
+                row_num = row.get('行号', idx+1)
+                print(f"🔄 重置项目: {row.get(' 店铺名称', f'行{row_num}')}")
                 
                 # 更新开始时间为今天
                 new_start_date = self.format_date(current_date)
@@ -195,14 +196,14 @@ class SmartExpiryChecker:
                 if pd.api.types.is_integer_dtype(df[columns['start_date']]):
                     df.at[idx, columns['start_date']] = int(new_start_date)
                 else:
-                df.at[idx, columns['start_date']] = str(new_start_date)
+                    df.at[idx, columns['start_date']] = str(new_start_date)
                 
                 # 重置剩余天数为总天数
                 df.at[idx, columns['remaining']] = total
                 
                 updated_items.append({
-                    'row': idx + 1,
-                    'name': row.get(' 店铺名称', f'行{idx+1}'),
+                    'row': row.get('行号', idx + 1),
+                    'name': row.get(' 店铺名称', f'行{row.get("行号", idx+1)}'),
                     'address': row.get('地址', '未知地址'),
                     'total_days': total,
                     'old_start': start_date,
@@ -220,7 +221,8 @@ class SmartExpiryChecker:
             
             # 如果当前剩余天数为0，跳过（这些会在update_expired_items中处理）
             if pd.notna(current_remaining) and int(current_remaining) == 0:
-                print(f"⏭️  跳过减1: {row.get(' 店铺名称', f'行{idx+1}')} 已经是0天")
+                row_num = row.get('行号', idx+1)
+                print(f"⏭️  跳过减1: {row.get(' 店铺名称', f'行{row_num}')} 已经是0天")
                 continue
             
             # 如果剩余天数不为0，每天减1
@@ -230,7 +232,8 @@ class SmartExpiryChecker:
                 
                 df.at[idx, columns['remaining']] = new_remaining
                 updated_count += 1
-                print(f"📅 剩余天数减1: {row.get(' 店铺名称', f'行{idx+1}')} {old_remaining} → {new_remaining}")
+                row_num = row.get('行号', idx+1)
+                print(f"📅 剩余天数减1: {row.get(' 店铺名称', f'行{row_num}')} {old_remaining} → {new_remaining}")
         
         return updated_count
     
@@ -250,11 +253,11 @@ class SmartExpiryChecker:
                 print(f"🚨 发现 {len(expired_df)} 个剩余天数为0的项目:")
                 for idx, row in expired_df.iterrows():
                     item_info = {
-                        'row': idx + 1,
+                        'row': row.get('行号', idx + 1),
                         'data': row.to_dict()
                     }
                     expired_items.append(item_info)
-                    print(f"  行 {idx + 1}: {dict(row)}")
+                    print(f"  行 {row.get('行号', idx + 1)}: {dict(row)}")
             else:
                 print("✅ 没有发现剩余天数为0的项目")
                 

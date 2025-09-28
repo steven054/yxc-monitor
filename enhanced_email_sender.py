@@ -39,7 +39,7 @@ class EnhancedEmailSender:
             plt.rcParams['axes.unicode_minus'] = False
             
             # 创建图形
-            fig, ax = plt.subplots(figsize=(16, 10))
+            fig, ax = plt.subplots(figsize=(20, 12))
             ax.axis('tight')
             ax.axis('off')
             
@@ -47,17 +47,20 @@ class EnhancedEmailSender:
             table_data = []
             for idx, row in df.iterrows():
                 table_data.append([
+                    str(row.get('行号', '')),
                     row.get(' 店铺名称', ''),
                     row.get('地址', ''),
                     str(row.get('总天', '')),
                     str(row.get('剩余', '')),
-                    str(row.get('开始时间', ''))
+                    str(row.get('开始时间', '')),
+                    str(row.get('备注1', '')),
+                    str(row.get('备注2', ''))
                 ])
             
             # 创建表格
             table = ax.table(
                 cellText=table_data,
-                colLabels=['店铺名称', '地址', '总天', '剩余', '开始时间'],
+                colLabels=['行号', '店铺名称', '地址', '总天', '剩余', '开始时间', '备注1', '备注2'],
                 cellLoc='center',
                 loc='center',
                 bbox=[0, 0, 1, 1]
@@ -68,8 +71,10 @@ class EnhancedEmailSender:
             table.set_fontsize(10)
             table.scale(1, 2)
             
-            # 设置标题
-            plt.title(title, fontsize=16, fontweight='bold', pad=20)
+            # 设置标题（包含发送日期）
+            from datetime import datetime
+            current_date = datetime.now().strftime('%Y年%m月%d日')
+            plt.title(f'{title} - {current_date}', fontsize=16, fontweight='bold', pad=20)
             
             # 高亮剩余天数为0的行
             for i in range(1, len(table_data) + 1):
@@ -206,9 +211,9 @@ class EnhancedEmailSender:
             print(f"❌ 发送增强版邮件失败: {e}")
             return False
     
-    def test_enhanced_email(self):
-        """测试增强版邮件发送"""
-        print("=== 测试增强版邮件发送 ===")
+    def send_real_data_email(self):
+        """发送真实数据的增强版邮件"""
+        print("=== 发送真实数据邮件 ===")
         
         # 读取Excel文件
         try:
@@ -218,33 +223,70 @@ class EnhancedEmailSender:
             print(f"❌ 读取Excel文件失败: {e}")
             return
         
-        # 模拟一些数据
-        expired_items = [
-            {
-                'row': 1,
-                'data': {
-                    ' 店铺名称': '测试店铺1',
-                    '地址': '测试地址1',
-                    '总天': 7
-                }
-            }
-        ]
+        # 查找关键列
+        columns = self.find_columns(df)
         
-        updated_items = [
-            {
-                'row': 2,
-                'name': '测试店铺2',
-                'address': '测试地址2',
-                'total_days': 10
-            }
-        ]
+        # 检查真实的过期项目
+        expired_items = []
+        for idx, row in df.iterrows():
+            remaining = row[columns['remaining']]
+            if pd.notna(remaining) and int(remaining) == 0:
+                expired_items.append({
+                    'row': row.get('行号', idx + 1),
+                    'data': row.to_dict()
+                })
+        
+        # 创建空的updated_items（因为这是查看当前状态，不是重置后的状态）
+        updated_items = []
+        
+        print(f"📊 发现 {len(expired_items)} 个过期项目")
         
         # 发送增强版邮件
         self.send_enhanced_email(expired_items, updated_items, df)
+    
+    def find_columns(self, df):
+        """查找关键列"""
+        columns = {}
+        
+        # 查找剩余天数列
+        possible_remaining = ['剩余天数', '剩余时间', '到期天数', '过期天数', '天数', 'days', 'remaining_days', '剩余', '到期', '过期']
+        for col in df.columns:
+            col_str = str(col).lower()
+            for name in possible_remaining:
+                if name in col_str:
+                    columns['remaining'] = col
+                    break
+            if 'remaining' in columns:
+                break
+        
+        # 查找总天数列
+        possible_total = ['总天数', '总时间', '总天', 'total_days', 'total', '天']
+        for col in df.columns:
+            col_str = str(col).lower()
+            for name in possible_total:
+                if name in col_str:
+                    columns['total'] = col
+                    break
+            if 'total' in columns:
+                break
+        
+        # 查找开始时间列
+        possible_start = ['开始时间', '开始日期', 'start_date', 'start_time', '开始']
+        for col in df.columns:
+            col_str = str(col).lower()
+            for name in possible_start:
+                if name in col_str:
+                    columns['start_date'] = col
+                    break
+            if 'start_date' in columns:
+                break
+        
+        print(f"🎯 找到的列: {columns}")
+        return columns
 
 def main():
     sender = EnhancedEmailSender()
-    sender.test_enhanced_email()
+    sender.send_real_data_email()
 
 if __name__ == "__main__":
     main()
