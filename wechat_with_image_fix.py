@@ -28,9 +28,42 @@ class WeChatImageSender:
             df = pd.read_excel('yxc.xlsx')
             print(f"✅ 成功读取Excel文件，共 {len(df)} 行数据")
             
-            # 设置中文字体
-            plt.rcParams['font.sans-serif'] = ['SimHei', 'Arial Unicode MS', 'DejaVu Sans']
+            # 设置中文字体 - 支持本地和GitHub Actions环境
+            import platform
+            import os
+            
+            # 检查是否在GitHub Actions环境中
+            is_github_actions = os.getenv('GITHUB_ACTIONS') == 'true'
+            system = platform.system()
+            
+            if is_github_actions or system == 'Linux':
+                # GitHub Actions或Linux环境 - 使用安装的中文字体
+                font_list = ['WenQuanYi Micro Hei', 'WenQuanYi Zen Hei', 'Noto Sans CJK SC', 'DejaVu Sans']
+                print("🔧 检测到GitHub Actions/Linux环境，使用中文字体")
+            elif system == 'Darwin':  # macOS
+                font_list = ['STHeiti', 'Hiragino Sans GB', 'PingFang SC', 'Arial Unicode MS']
+                print("🍎 检测到macOS环境，使用系统字体")
+            elif system == 'Windows':  # Windows
+                font_list = ['SimHei', 'Microsoft YaHei', 'KaiTi', 'FangSong']
+                print("🪟 检测到Windows环境，使用系统字体")
+            else:
+                font_list = ['DejaVu Sans']
+                print("⚠️ 未知环境，使用默认字体")
+            
+            # 设置字体
+            plt.rcParams['font.sans-serif'] = font_list
             plt.rcParams['axes.unicode_minus'] = False
+            
+            # 在GitHub Actions中重建字体缓存
+            if is_github_actions:
+                try:
+                    import matplotlib.font_manager as fm
+                    fm._rebuild()
+                    print("✅ 已重建字体缓存")
+                except:
+                    print("⚠️ 字体缓存重建失败，但继续执行")
+            
+            print(f"✅ 已设置字体: {font_list[0]}")
             
             # 创建图形 - 增加高度以适应更高的行高
             fig, ax = plt.subplots(figsize=(16, 15))
