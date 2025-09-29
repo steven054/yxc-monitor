@@ -58,10 +58,11 @@ class WeChatImageSender:
             if is_github_actions:
                 try:
                     import matplotlib.font_manager as fm
-                    fm._rebuild()
+                    # 使用正确的方法重建字体缓存
+                    fm.fontManager.__init__()
                     print("✅ 已重建字体缓存")
-                except:
-                    print("⚠️ 字体缓存重建失败，但继续执行")
+                except Exception as e:
+                    print(f"⚠️ 字体缓存重建失败: {e}，但继续执行")
             
             print(f"✅ 已设置字体: {font_list[0]}")
             
