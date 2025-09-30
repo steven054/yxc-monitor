@@ -9,12 +9,31 @@ import matplotlib
 import io
 import base64
 import hashlib
-from datetime import datetime
+from datetime import datetime, timezone, timedelta
 import os
 from dotenv import load_dotenv
 
 # 加载环境变量
 load_dotenv()
+
+def get_beijing_time():
+    """获取北京时间"""
+    # 创建北京时区 (UTC+8)
+    beijing_tz = timezone(timedelta(hours=8))
+    
+    # 检查是否在GitHub Actions环境中
+    if os.getenv('GITHUB_ACTIONS') == 'true':
+        # GitHub Actions使用UTC时间，需要转换为北京时间
+        utc_now = datetime.now(timezone.utc)
+        beijing_time = utc_now.astimezone(beijing_tz)
+        print(f"🌍 GitHub Actions环境，UTC时间: {utc_now.strftime('%Y-%m-%d %H:%M:%S')} UTC")
+        print(f"🇨🇳 转换为北京时间: {beijing_time.strftime('%Y-%m-%d %H:%M:%S')} CST")
+    else:
+        # 本地环境，直接获取北京时间
+        beijing_time = datetime.now(beijing_tz)
+        print(f"🏠 本地环境，北京时间: {beijing_time.strftime('%Y-%m-%d %H:%M:%S')} CST")
+    
+    return beijing_time
 
 class WeChatImageSender:
     def __init__(self):
@@ -135,7 +154,7 @@ class WeChatImageSender:
                         table[(i, j)].set_text_props(weight='bold', color='#990000')  # 更深的红色粗体字体
             
             # 设置标题（包含发送日期）
-            current_date = datetime.now().strftime('%Y年%m月%d日')
+            current_date = get_beijing_time().strftime('%Y年%m月%d日')
             plt.title(f'店铺监控数据表 - {current_date}', fontsize=16, fontweight='bold', pad=20)
             
             # 保存图片到内存
@@ -222,7 +241,7 @@ class WeChatImageSender:
     def calculate_remaining_days(self, df, columns):
         """基于实际日期计算剩余天数"""
         updated_count = 0
-        current_date = datetime.now()
+        current_date = get_beijing_time()
         
         for idx, row in df.iterrows():
             start_date_str = str(row[columns['start_date']])
@@ -232,6 +251,14 @@ class WeChatImageSender:
             try:
                 # 解析开始时间
                 start_date = datetime.strptime(start_date_str, '%Y%m%d')
+                
+                # 确保两个datetime对象都是naive或都是aware
+                if current_date.tzinfo is not None:
+                    # 如果current_date有时区信息，将start_date也转换为相同时区
+                    start_date = start_date.replace(tzinfo=current_date.tzinfo)
+                elif start_date.tzinfo is not None:
+                    # 如果start_date有时区信息，将current_date也转换为相同时区
+                    current_date = current_date.replace(tzinfo=start_date.tzinfo)
                 
                 # 计算已过去的天数
                 days_passed = (current_date - start_date).days
@@ -257,7 +284,7 @@ class WeChatImageSender:
     def reset_expired_items(self, df, columns):
         """重置剩余天数为0的项目"""
         reset_count = 0
-        current_date = datetime.now()
+        current_date = get_beijing_time()
         
         for idx, row in df.iterrows():
             remaining = row[columns['remaining']]
@@ -370,7 +397,7 @@ class WeChatImageSender:
                 else:
                     note3_stats['正常'] += 1
             
-            current_date = datetime.now().strftime('%Y年%m月%d日 %H:%M')
+            current_date = get_beijing_time().strftime('%Y年%m月%d日 %H:%M')
             
             # 创建文本消息
             text_message = f"""📊 店铺监控数据报告 - {current_date}
